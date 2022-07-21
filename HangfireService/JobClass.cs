@@ -8,13 +8,18 @@ namespace HangfireService
 {
     public class JobClass
     {
-
-        public void checkfailtask()
+        IConfiguration configuration;
+        public JobClass()
         {
-            IConfiguration configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
               .Add(new JsonConfigurationSource { Path = "appsettings.json", ReloadOnChange = true })
               .Build();
 
+        }
+
+        public void checkfailtask()
+        {
+           
             DataTable dataTable = new DataTable();
             using (SqlConnection connection = new SqlConnection(configuration["ConnectionString"]))
             {
@@ -50,6 +55,7 @@ namespace HangfireService
 ";
                     msgBody.markdown = markdown;
                     msgBody.msgtype = "markdown";
+                    msgBody.touser =configuration["touser"];
                     HttpHelper httpHelper = new HttpHelper();
                     httpHelper.PostMessage01(msgBody);
 
@@ -120,7 +126,6 @@ namespace HangfireService
         
         public MsgBody()
         {
-            touser = "78432";
             agentid = 1000106;
         }
         public string touser { get; set; }

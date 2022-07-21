@@ -42,7 +42,7 @@ namespace HangfireService
           
           
             services.AddHangfireServer();
-
+          
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -58,9 +58,10 @@ namespace HangfireService
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/", async context =>
+                endpoints.Map("/", context =>
                 {
-                    await context.Response.WriteAsync("Hello World!");
+                    context.Response.Redirect("/hangfire");
+                    return Task.CompletedTask;
                 });
             });
 
