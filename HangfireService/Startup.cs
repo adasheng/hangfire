@@ -16,12 +16,13 @@ namespace HangfireService
 {
     public class Startup
     {
-       
+        IConfiguration config;
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            IConfiguration config = new ConfigurationBuilder()
+           config = new ConfigurationBuilder()
           .Add(new JsonConfigurationSource { Path = "appsettings.json", ReloadOnChange = true })
           .Build();
            
@@ -68,7 +69,7 @@ namespace HangfireService
             app.UseHangfireDashboard();//ÅäÖÃºóÌ¨ÒÇ±íÅÌ
 
             JobClass jobClass = new JobClass();
-            RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), "0 0/5 * * * ? ");
+            RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
         }
     }
 }
