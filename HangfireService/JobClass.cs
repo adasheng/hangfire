@@ -99,7 +99,7 @@ namespace HangfireService
 ";
                     msgBody.markdown = markdown;
                     msgBody.msgtype = "markdown";
-                    msgBody.touser = "78432";
+                    msgBody.touser = configuration["touser_test"];
                     HttpHelper httpHelper = new HttpHelper();
                     httpHelper.PostMessage01(msgBody);
 
