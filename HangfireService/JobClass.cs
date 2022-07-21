@@ -181,4 +181,26 @@ namespace HangfireService
         public int expires_in { get; set; }
     }
 
+
+    [Serializable]
+    public class SendMsgResult
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public int errcode { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string errmsg { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string msgid { get; set; }
+    }
+
+    
+
 }

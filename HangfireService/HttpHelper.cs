@@ -51,7 +51,20 @@ namespace HangfireService
             try
             {
                 var response = (HttpWebResponse)request.GetResponse();
+                Stream stream = response.GetResponseStream();
 
+                // 取得返回结果
+                string result = string.Empty;
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                     result = reader.ReadToEnd();
+                }
+
+                SendMsgResult sendMsgResult= JsonConvert.DeserializeObject<SendMsgResult>(result);
+                if (sendMsgResult!=null&&sendMsgResult.errcode!=0)
+                {
+                    WriteLog(sendMsgResult);
+                }
             }
             catch (Exception ex)
             {
@@ -100,5 +113,34 @@ namespace HangfireService
             return tokenBody.access_token;
         }
 
+
+        public void  WriteLog(SendMsgResult msgResult)
+        {
+            string filefloders = AppDomain.CurrentDomain.BaseDirectory + "\\log\\";
+            if (!Directory.Exists(filefloders))
+            {
+                Directory.CreateDirectory(filefloders);
+            }
+
+            string postPath = filefloders + "log" + ".txt";//路径+文件名
+            byte[] bytes = null;
+            bytes = Encoding.UTF8.GetBytes($@"时间：{DateTime.Now} 错误代码：{msgResult.errcode} 错误详情：{msgResult.errmsg}"+ "\r\n");
+
+            FileStream fs = null;
+            if (File.Exists(postPath))
+            {
+                //追加内容
+                fs = File.OpenWrite(postPath);
+                fs.Position = fs.Length;
+            }
+            else
+            {
+                //新建
+                fs = new FileStream(postPath, FileMode.Append);
+            }
+
+            fs.Write(bytes, 0, bytes.Length);
+            fs.Close();
+        }
     }
 }
