@@ -3,23 +3,26 @@ using Microsoft.Extensions.Configuration.Json;
 using System.Data.SqlClient;
 using System.Data;
 using System;
+using System.IO;
 
 namespace HangfireService
 {
     public class JobClass
     {
         IConfiguration configuration;
+        string msgText;
         public JobClass()
         {
             configuration = new ConfigurationBuilder()
               .Add(new JsonConfigurationSource { Path = "appsettings.json", ReloadOnChange = true })
               .Build();
 
+
         }
 
         public void checkfailtask()
         {
-           
+
             DataTable dataTable = new DataTable();
             using (SqlConnection connection = new SqlConnection(configuration["ConnectionString"]))
             {
@@ -42,20 +45,12 @@ namespace HangfireService
                 {
                     MsgBody msgBody = new MsgBody();
                     Markdown markdown = new Markdown();
-                    markdown.content = $@"***有新的定时任务执行失败通知***
->
->
->【任务类型】：数据库作业
->【任务名称】：{item["sql_server_agent_job_name"]}
->【执行时间】：{DateTime.Now.ToString("F")}
->【失败原因】：{item["job_step_failure_message"]}
->
->
->请及时进行查看处理。 
-";
+                    string content = GetMsgContent().Replace("task", item["sql_server_agent_job_name"].ToString())
+                         .Replace("date", DateTime.Now.ToString("F")).Replace("msg", item["job_step_failure_message"].ToString());
+                    markdown.content = content;
                     msgBody.markdown = markdown;
                     msgBody.msgtype = "markdown";
-                    msgBody.touser =configuration["touser"];
+                    msgBody.touser = configuration["touser"];
                     HttpHelper httpHelper = new HttpHelper();
                     httpHelper.PostMessage01(msgBody);
 
@@ -86,17 +81,9 @@ namespace HangfireService
                 {
                     MsgBody msgBody = new MsgBody();
                     Markdown markdown = new Markdown();
-                    markdown.content = $@"***有新的定时任务执行失败通知***
->
->
->【任务类型】：数据库作业
->【任务名称】：{item["Key"]}
->【执行时间】：{DateTime.Now.ToString("F")}
->【失败原因】：{item["Value"]}
->
->
->请及时进行查看处理。 
-";
+                    string content = GetMsgContent().Replace("task", item["key"].ToString())
+                        .Replace("date", DateTime.Now.ToString("F")).Replace("msg", item["value"].ToString());
+                    markdown.content = content;
                     msgBody.markdown = markdown;
                     msgBody.msgtype = "markdown";
                     msgBody.touser = configuration["touser_test"];
@@ -111,6 +98,27 @@ namespace HangfireService
         }
 
 
+
+        public string GetMsgContent()
+        {
+            string text = string.Empty;
+            string postPath = AppDomain.CurrentDomain.BaseDirectory + "\\msgstyle.txt";
+
+            FileStream fs = null;
+            if (File.Exists(postPath))
+            {
+                text = System.IO.File.ReadAllText(postPath);
+
+            }
+            else
+            {
+                text = "";
+            }
+
+
+
+            return text;
+        }
     }
     [Serializable]
     public class Markdown
