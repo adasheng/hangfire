@@ -142,5 +142,42 @@ namespace HangfireService
             fs.Write(bytes, 0, bytes.Length);
             fs.Close();
         }
+
+        public static string Post(string content,string url)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(content);
+            var request = (HttpWebRequest)WebRequest.Create(url);
+
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            request.ContentLength = data.Length;
+
+            using (var stream = request.GetRequestStream())
+            {
+                stream.Write(data, 0, data.Length);
+            }
+            try
+            {
+                var response = (HttpWebResponse)request.GetResponse();
+                Stream stream = response.GetResponseStream();
+
+                // 取得返回结果
+                string result = string.Empty;
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    result = reader.ReadToEnd();
+                }
+
+              
+                return result;
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+
+        }
     }
 }
