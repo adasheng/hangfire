@@ -103,7 +103,7 @@ namespace HangfireService.model
         [JsonProperty("moment_id", NullValueHandling = NullValueHandling.Ignore)]
         public string MomentId { get; set; }
 
-        [JsonProperty("text", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("Text", NullValueHandling = NullValueHandling.Ignore)]
         public Text Text { get; set; }
 
         [JsonProperty("video", NullValueHandling = NullValueHandling.Ignore)]
@@ -317,6 +317,9 @@ namespace HangfireService.model
         /// </summary>
         [JsonProperty("external_userid", NullValueHandling = NullValueHandling.Ignore)]
         public string ExternalUserid { get; set; }
+
+        [JsonProperty("userid", NullValueHandling = NullValueHandling.Ignore)]
+        public string Userid { get; set; }
     }
     #endregion
 

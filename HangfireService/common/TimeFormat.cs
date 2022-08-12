@@ -10,7 +10,7 @@ namespace HangfireService.common
         /// <param name="dateTime">DateTime时间</param>
         ///  <param name="format">精度：Seconds-秒，Milliseconds-毫秒</param>
         /// <returns></returns>
-        public static long ToUnixTimeStamp(DateTime dateTime, string accuracy= "Seconds")
+        public static long ToUnixTimeStamp(DateTime dateTime, string accuracy = "Seconds")
         {
             long intResult = 0;
             DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1));
@@ -29,6 +29,16 @@ namespace HangfireService.common
 
             return intResult;
         }
+
+
+
+        public static DateTime TimeStampToDateTime(long timeStamp, bool inMilli = false)
+        {
+            DateTimeOffset dateTimeOffset = inMilli ? DateTimeOffset.FromUnixTimeMilliseconds(timeStamp) : DateTimeOffset.FromUnixTimeSeconds(timeStamp);
+            return dateTimeOffset.LocalDateTime;
+        }
+
+
 
     }
 }

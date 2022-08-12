@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.SqlServer;
+using HangfireService.tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -36,7 +37,7 @@ namespace HangfireService
                     CountersAggregateInterval = TimeSpan.FromMinutes(5),      //- 聚合计数器的间隔。默认为5分钟。
                     PrepareSchemaIfNecessary = true,                          //- 如果设置为true，则创建数据库表。默认是true。
                     DashboardJobListLimit = 50000,                            //- 仪表板作业列表限制。默认值为50000。
-                    TransactionTimeout = TimeSpan.FromMinutes(1)           //- 交易超时。默认为1分钟。
+                    TransactionTimeout = TimeSpan.FromMinutes(10000)           //- 交易超时。默认为1分钟。
                 }
                 )));
 
@@ -68,8 +69,27 @@ namespace HangfireService
 
             app.UseHangfireDashboard();//配置后台仪表盘
 
-            JobClass jobClass = new JobClass();
-            RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
+            //监控数据库作业 任务
+            //JobClass jobClass = new JobClass();
+            //RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
+
+            //拉取企微朋友圈列表 服务
+            WechatMomentDataJob  wechatMomentDataJob1 = new WechatMomentDataJob();
+            // RecurringJob.AddOrUpdate(() => wechatMomentDataJob.getWechatMomentList(), "0 0 0 * * ? ");
+
+            WechatMomentDataJob wechatMomentDataJob2 = new WechatMomentDataJob();
+            //拉取企微朋友圈成员列表  服务
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob2.getWechatMomentMembers(), "0 0 0 * * ? ");
+
+            WechatMomentDataJob wechatMomentDataJob3 = new WechatMomentDataJob();
+            //拉取企微朋友圈成员对应客户列表  服务
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob3.getWechatMomentUsers(), "0 0 0 * * ? ");
+
+            WechatMomentDataJob wechatMomentDataJob4 = new WechatMomentDataJob();
+            //拉取企微朋友圈成员对应客户列表 结果  服务
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob4.getWechatMomentResult(), "0 0 0 * * ? ");
+
+
         }
     }
 }

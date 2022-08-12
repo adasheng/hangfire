@@ -113,6 +113,28 @@ namespace HangfireService
             return tokenBody.access_token;
         }
 
+        public static string GetToken(string secret)
+        {
+            string corpid = "wxec56ca668e7f9155";
+            //string secret = "xlrFFNs9x8wVCPabFyWLZLRm0doD1mNch-_MTKbDYQI";
+            string url = $@"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corpid}&corpsecret={secret}";
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "GET";
+            request.ContentType = "text/html;charset=UTF-8";
+            request.UserAgent = null;
+
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            Stream myResponseStream = response.GetResponseStream();
+            StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("utf-8"));
+            string retString = myStreamReader.ReadToEnd();
+            myStreamReader.Close();
+            myResponseStream.Close();
+
+
+            tokenBody tokenBody = Newtonsoft.Json.JsonConvert.DeserializeObject<tokenBody>(retString);
+            return tokenBody.access_token;
+        }
 
         public void  WriteLog(SendMsgResult msgResult)
         {
