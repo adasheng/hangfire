@@ -70,24 +70,24 @@ namespace HangfireService
             app.UseHangfireDashboard();//配置后台仪表盘
 
             //监控数据库作业 任务
-            //JobClass jobClass = new JobClass();
-            //RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
+            JobClass jobClass = new JobClass();
+            RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
 
             //拉取企微朋友圈列表 服务
             WechatMomentDataJob  wechatMomentDataJob1 = new WechatMomentDataJob();
-            // RecurringJob.AddOrUpdate(() => wechatMomentDataJob.getWechatMomentList(), "0 0 0 * * ? ");
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob1.getWechatMomentList(), config["朋友圈推送列表"]);
 
             WechatMomentDataJob wechatMomentDataJob2 = new WechatMomentDataJob();
             //拉取企微朋友圈成员列表  服务
-            RecurringJob.AddOrUpdate(() => wechatMomentDataJob2.getWechatMomentMembers(), "0 0 0 * * ? ");
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob2.getWechatMomentMembers(), config["朋友圈推送成员"]);
 
             WechatMomentDataJob wechatMomentDataJob3 = new WechatMomentDataJob();
             //拉取企微朋友圈成员对应客户列表  服务
-            RecurringJob.AddOrUpdate(() => wechatMomentDataJob3.getWechatMomentUsers(), "0 0 0 * * ? ");
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob3.getWechatMomentUsers(), config["朋友圈推送客户"]);
 
             WechatMomentDataJob wechatMomentDataJob4 = new WechatMomentDataJob();
             //拉取企微朋友圈成员对应客户列表 结果  服务
-            RecurringJob.AddOrUpdate(() => wechatMomentDataJob4.getWechatMomentResult(), "0 0 0 * * ? ");
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob4.getWechatMomentResult(), config["朋友圈推送结果"]);
 
 
         }

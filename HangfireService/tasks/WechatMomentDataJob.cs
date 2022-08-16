@@ -22,8 +22,8 @@ namespace HangfireService.tasks
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url =$@"https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_moment_list?access_token={token}";
 
-            long begin= TimeFormat.ToUnixTimeStamp(Convert.ToDateTime("2022-08-01"));
-            long end = TimeFormat.ToUnixTimeStamp(Convert.ToDateTime("2022-08-30"));
+            long begin= TimeFormat.ToUnixTimeStamp(DateTime.Now.AddDays(-1));
+            long end = TimeFormat.ToUnixTimeStamp(DateTime.Now);
             WechatMomentListRequest  wechatMomentListRequest=new WechatMomentListRequest ();
             wechatMomentListRequest.StartTime= begin;
             wechatMomentListRequest.EndTime= end;
@@ -219,6 +219,7 @@ AS t(momentid,member,sendstatus)";
                     }
                 }
             }
+            
             if (!string.IsNullOrEmpty(value))
             {
                 value = value.TrimEnd(',');
@@ -261,7 +262,7 @@ AS T(momentid,memberid,customerid,sendstatus)";
         {
 
             //查询成员任务 对应的朋友圈推文id
-            string sql = "select distinct  momentid,member from wechat_moment_user";
+            string sql = "select distinct  momentid,member from wechat_moment_user where momentid='mom0y3RTCwAAkci32g_PeDtpNZkv-tUOUg'";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
             string momentid = string.Empty;
@@ -305,7 +306,7 @@ AS T(momentid,memberid,customerid,sendstatus)";
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(value))
+           if (!string.IsNullOrEmpty(value))
             {
                 value = value.TrimEnd(',');
                 sql = $@"
