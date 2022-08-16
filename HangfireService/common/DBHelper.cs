@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
+using System;
 using System.Collections;
 using System.Data;
 using System.Data.SqlClient;
@@ -6,9 +8,19 @@ namespace HangfireService.common
 {
     public class DBHelper
     {
-        //临时
-        public static string connString = "Data Source = 192.168.10.153;Initial Catalog = Panda_panda;User Id = sa;Password = zls_1234@abcd";
 
+        static IConfiguration configuration;
+
+        public DBHelper()
+        {
+            configuration = new ConfigurationBuilder()
+              .Add(new JsonConfigurationSource { Path = "appsettings.json", ReloadOnChange = true })
+              .Build();
+
+
+        }
+        //临时
+        public static string connString = configuration["ConnectionString"].ToString();
         /// <summary>
         /// 执行SQL语句，返回DataTable数据
         /// </summary>

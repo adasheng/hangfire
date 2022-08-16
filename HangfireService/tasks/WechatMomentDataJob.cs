@@ -175,7 +175,9 @@ AS t(momentid,member,sendstatus)";
         {
 
             //查询成员任务 对应的朋友圈推文id
-            string sql = "select distinct  momentid,member from wechat_moment_user";
+            string sql = @$"select distinct  a.momentid,member from wechat_moment_user A 
+left join  wechat_momentList L ON A.momentid=L.momentid
+WHERE   Datediff (mm,getdate(),l.createtime) =0";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
             string momentid = string.Empty;
@@ -262,7 +264,9 @@ AS T(momentid,memberid,customerid,sendstatus)";
         {
 
             //查询成员任务 对应的朋友圈推文id
-            string sql = "select distinct  momentid,member from wechat_moment_user where momentid='mom0y3RTCwAAkci32g_PeDtpNZkv-tUOUg'";
+            string sql = $@"select distinct  a.momentid,member from wechat_moment_user A 
+left join  wechat_momentList L ON A.momentid = L.momentid
+WHERE Datediff(mm, getdate(), l.createtime) = 0";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
             string momentid = string.Empty;
