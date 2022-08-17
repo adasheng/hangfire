@@ -123,13 +123,18 @@ AS t(momentid,momentitle,creator,createtime,create_type,visible_type)";
             }
 
             string values = string.Empty;
+            List<string> rangUser = GetMemberRange();
             foreach (var item in wechatMomentUserList)
             {
                 foreach (WechatMomentUserResult userResult in item.Value)
                 {
                     foreach (var tasklst in userResult.TaskList)
                     {
-                        values += $@" ('{item.Key}','{tasklst.Userid}','{tasklst.PublishStatus}'),";
+                        if (rangUser.Contains(tasklst.Userid))
+                        {
+                            values += $@" ('{item.Key}','{tasklst.Userid}','{tasklst.PublishStatus}'),";
+                        }
+                        
                     }
                    
                 }
@@ -397,6 +402,21 @@ AS T(momentid,memberid,customerid,sendstatus)";
             }
 
             return customerResults;
+        }
+
+
+
+        public List<string> GetMemberRange()
+        {
+            List<string> list = new List<string>();
+            string sql = "SELECT 工号 FROM  企业微信添加总名单";
+            var result = DBHelper.ExecuteDataTable(sql, out string err);
+            foreach (DataRow item in result.Rows)
+            {
+                list.Add(item["工号"].ToString());
+            }
+
+            return list;
         }
     }
 

@@ -399,21 +399,9 @@ namespace HangfireService.model
             public string Content { get; set; }
         }
 
-        public static class Serialize
-        {
-            public static string ToJson<T>(T self)
-            {
-                return JsonConvert.SerializeObject(self, CityServer.OA.Model.WeChat.Converter.Settings);
-            }
-        }
+       
 
-        public static class Deserialize
-        {
-            public static T FromJson<T>(string json)
-            {
-                return JsonConvert.DeserializeObject<T>(json, CityServer.OA.Model.WeChat.Converter.Settings);
-            }
-        }
+       
 
         internal static class Converter
         {

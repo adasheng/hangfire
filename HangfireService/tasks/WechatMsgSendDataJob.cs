@@ -108,9 +108,9 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
             body.EndTime = Convert.ToInt64(endts.TotalSeconds);
             body.ChatType = "single";
 
-            string json = HttpHelper.Post(Serialize.ToJson(body), url);
+            string json = HttpHelper.Post(Newtonsoft.Json.JsonConvert.SerializeObject(body), url);
            
-            WeChatMassSendModelResult weChatMassSendModelResult = Deserialize.FromJson<WeChatMassSendModelResult>(json);
+            WeChatMassSendModelResult weChatMassSendModelResult =JsonConvert.DeserializeObject<WeChatMassSendModelResult>(json);
             sendModelResult.Add(weChatMassSendModelResult);
             cusor = weChatMassSendModelResult.NextCursor;
             if (string.IsNullOrEmpty(cusor))
@@ -137,7 +137,7 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
             List<WeChatSendTaskResult> taskResults = new List<WeChatSendTaskResult>();
             string nextCusor = string.Empty;
 
-            string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList";
+            string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList WHERE MagType=0 AND DATEDIFF(MM,CreateDate,GETDATE())=0";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
             List<string> lstID = (from d in dt.AsEnumerable() select d.Field<string>("MsgId")).ToList();
             foreach (var item in lstID)
@@ -146,11 +146,16 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
             }
 
             string values = string.Empty;
+            List<string> rangeUser = GetMemberRange();
             foreach (var taskResult in taskResults)
             {
                 foreach (var item in taskResult.TaskList)
                 {
-                    values += $@"('{taskResult.MsgId}','{item.Userid}','{TimeFormat.TimeStampToDateTime(Convert.ToInt64(item.SendTime))}','{item.Status}'),";
+                    if (rangeUser.Contains(item.Userid))
+                    {
+                        values += $@"('{taskResult.MsgId}','{item.Userid}','{TimeFormat.TimeStampToDateTime(Convert.ToInt64(item.SendTime))}','{item.Status}'),";
+                    }
+                    
                 }
             }
 
@@ -170,8 +175,8 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
             requstBody.Limit = 1000;
             requstBody.Cursor = nextCusor;
 
-            string json = HttpHelper.Post(Serialize.ToJson(requstBody), url);
-            WeChatSendTaskResult taskResult = Deserialize.FromJson<WeChatSendTaskResult>(json);
+            string json = HttpHelper.Post(JsonConvert.SerializeObject(requstBody), url);
+            WeChatSendTaskResult taskResult = JsonConvert.DeserializeObject<WeChatSendTaskResult>(json);
             taskResult.MsgId = MsgId;
             taskResults.Add(taskResult);
 
@@ -193,7 +198,7 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_groupmsg_send_result?access_token={0}", token);
 
-            string sql = "SELECT DISTINCT MstId,MemberId FROM wechat_MsgTaskList";
+            string sql = "SELECT DISTINCT top 10 MstId,MemberId FROM wechat_MsgTaskList";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
 
             List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
@@ -253,9 +258,9 @@ SELECT [MsgId], [UserId], [External_userId], [SendStutas], [SendTime] FROM (VALU
             requstBody.Userid = userId;
             requstBody.Msgid = MsgId;
 
-            string json = HttpHelper.Post(Serialize.ToJson(requstBody), url);
+            string json = HttpHelper.Post(JsonConvert.SerializeObject(requstBody), url);
 
-            WeChatSendMsgResult taskResult = Deserialize.FromJson<WeChatSendMsgResult>(json);
+            WeChatSendMsgResult taskResult = JsonConvert.DeserializeObject<WeChatSendMsgResult>(json);
             taskResult.MsgId = MsgId;
             weChatSendMsgResults.Add(taskResult);
             nextCursor = taskResult.NextCursor;
@@ -266,7 +271,18 @@ SELECT [MsgId], [UserId], [External_userId], [SendStutas], [SendTime] FROM (VALU
             GetMsgResult(weChatSendMsgResults, url, nextCursor, userId, MsgId);
         }
 
+        public  List<string> GetMemberRange()
+        {
+            List<string> list = new List<string>();
+            string sql = "SELECT 工号 FROM  企业微信添加总名单";
+            var result = DBHelper.ExecuteDataTable(sql, out string err);
+            foreach (DataRow item in result.Rows)
+            {
+                list.Add(item["工号"].ToString());
+            }
 
+            return list;
+        }
 
     }
 }

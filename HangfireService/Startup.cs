@@ -90,6 +90,17 @@ namespace HangfireService
             RecurringJob.AddOrUpdate(() => wechatMomentDataJob4.getWechatMomentResult(), config["朋友圈推送结果"]);
 
 
+            //拉取企微推送消息列表
+            WechatMsgSendDataJob msgSendDataJob = new WechatMsgSendDataJob();
+            RecurringJob.AddOrUpdate(() => msgSendDataJob.WechatClient_SyncMsgInfo(), config["消息推送列表"]);
+
+            //拉取 企微推送消息任务列表
+            WechatMsgSendDataJob msgSendDataJob1 = new WechatMsgSendDataJob();
+            RecurringJob.AddOrUpdate(() => msgSendDataJob1.WechatClient_SyncMsgTask(), config["消息推送成员"]);
+
+            //拉取 企微推送消息结果
+            WechatMsgSendDataJob msgSendDataJob2 = new WechatMsgSendDataJob();
+            RecurringJob.AddOrUpdate(() => msgSendDataJob2.WechatClient_SyncMsgResult(), config["消息推送结果"]);
 
         }
     }
