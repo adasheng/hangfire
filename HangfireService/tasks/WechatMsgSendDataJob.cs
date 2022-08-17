@@ -198,7 +198,7 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_groupmsg_send_result?access_token={0}", token);
 
-            string sql = "SELECT DISTINCT top 10 MstId,MemberId FROM wechat_MsgTaskList";
+            string sql = "SELECT DISTINCT  MstId,MemberId FROM wechat_MsgTaskList";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
 
             List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
