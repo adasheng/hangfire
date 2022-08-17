@@ -90,6 +90,7 @@ namespace HangfireService
             RecurringJob.AddOrUpdate(() => wechatMomentDataJob4.getWechatMomentResult(), config["ÅóÓÑÈ¦ÍÆËÍ½á¹û"]);
 
 
+
         }
     }
 }

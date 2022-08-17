@@ -3,6 +3,7 @@ using HangfireService.model;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -22,8 +23,12 @@ namespace HangfireService.tasks
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url =$@"https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_moment_list?access_token={token}";
 
-            long begin= TimeFormat.ToUnixTimeStamp(DateTime.Now.AddDays(-1));
+            long begin = TimeFormat.ToUnixTimeStamp(DateTime.Now.AddDays(-1));
             long end = TimeFormat.ToUnixTimeStamp(DateTime.Now);
+
+
+
+
             WechatMomentListRequest  wechatMomentListRequest=new WechatMomentListRequest ();
             wechatMomentListRequest.StartTime= begin;
             wechatMomentListRequest.EndTime= end;
@@ -55,7 +60,7 @@ namespace HangfireService.tasks
                     DateTime createtime = TimeFormat.TimeStampToDateTime(Convert.ToInt64(item.CreateTime));
                     if (!momentIds.Contains(item.MomentId))
                     {
-                        values += $@"('{item.MomentId}','{commentName}','{item.Creator}','{createtime}',''),";
+                        values += $@"('{item.MomentId}','{commentName}','{item.Creator}','{createtime}','{item.CreateType}','{item.VisibleType}'),";
                     }
                     
                 }
@@ -65,9 +70,9 @@ namespace HangfireService.tasks
             //写入数据库
             if (!string.IsNullOrEmpty(values))
             {
-                string sql = $@"INSERT INTO wechat_momentList(momentid,momentitle,creator,createtime,creatname)
-SELECT momentid,momentitle,creator,createtime,creatname FROM (VALUES {values}) 
-AS t(momentid,momentitle,creator,createtime,creatname)";
+                string sql = $@"INSERT INTO wechat_momentList(momentid,momentitle,creator,createtime,create_type,visible_type)
+SELECT momentid,momentitle,creator,createtime,create_type,visible_type FROM (VALUES {values}) 
+AS t(momentid,momentitle,creator,createtime,create_type,visible_type)";
 
                 DBHelper.ExecuteNonQuery(sql);
             }
@@ -94,8 +99,8 @@ AS t(momentid,momentitle,creator,createtime,creatname)";
         /// </summary>
         public void getWechatMomentMembers()
         {
-            //查询所有已发送朋友圈的id
-            string sql = "select  distinct   momentid from [dbo].[wechat_momentList]";
+            //查询所有企业已发送朋友圈的id
+            string sql = "select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0";
             var dt= DBHelper.ExecuteDataTable(sql,out string err);
             List<string> momentids = new List<string>();
             foreach (DataRow item in dt.Rows)
@@ -176,8 +181,9 @@ AS t(momentid,member,sendstatus)";
 
             //查询成员任务 对应的朋友圈推文id
             string sql = @$"select distinct  a.momentid,member from wechat_moment_user A 
-left join  wechat_momentList L ON A.momentid=L.momentid
-WHERE   Datediff (mm,getdate(),l.createtime) =0";
+left join  wechat_momentList L ON A.momentid = L.momentid
+WHERE Datediff(mm, getdate(), l.createtime) = 0
+";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
             string momentid = string.Empty;
@@ -194,19 +200,36 @@ WHERE   Datediff (mm,getdate(),l.createtime) =0";
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url = $@"https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_moment_customer_list?access_token={token}";
 
-            Dictionary<string, List<WechatMomentCustomerResult>> resultdic = new Dictionary<string, List<WechatMomentCustomerResult>>();
-
-            foreach (MomentMember mm in userIds)
+            ConcurrentDictionary<string, List<WechatMomentCustomerResult>> resultdic = new ConcurrentDictionary<string, List<WechatMomentCustomerResult>>();
+           
+            List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
+            List<MomentMember>tempmenbers = new List<MomentMember>();
+            for (int i = 0; i < userIds.Count; i++)
             {
-                WechatMomentCustomerRequest request = new WechatMomentCustomerRequest();
-                request.Userid = mm.memberId;
-                request.MomentId = mm.momentId;
-                request.Limit = 5000;
+                tempmenbers.Add(userIds[i]);
+                //每1000条数据 开启一个线程
+                if (tempmenbers.Count == 1000||i == userIds.Count - 1)
+                {
+                    var newTempmenbers = tempmenbers;
+                    tasks.Add(System.Threading.Tasks.Task.Run(() =>
+                    {
+                        foreach (var mm in newTempmenbers)
+                        {
+                            WechatMomentCustomerRequest request = new WechatMomentCustomerRequest();
+                            request.Userid = mm.memberId;
+                            request.MomentId = mm.momentId;
+                            request.Limit = 5000;
 
-                resultdic.Add(mm.momentId+"|"+mm.memberId, getWechatMomentUsersRound(url, request, new List<WechatMomentCustomerResult>()));
-                //resultdic.Add(mm, getWechatMomentUsersRound(url, request, new List<WechatMomentCustomerResult>()));
-                
+                            resultdic.TryAdd(mm.momentId + "|" + mm.memberId, getWechatMomentUsersRound(url, request, new List<WechatMomentCustomerResult>()));
+
+                        }
+                    }));
+                    tempmenbers=new List<MomentMember>();
+                }
             }
+            
+            System.Threading.Tasks.Task.WaitAll(tasks.ToArray(), -1);
+
 
             string value = string.Empty;
             foreach (var item in resultdic)
@@ -231,7 +254,7 @@ SELECT momentid,memberid,customerid,sendstatus FROM (VALUES {value})
 AS T(momentid,memberid,customerid,sendstatus)";
 
                 ArrayList arrayList = new ArrayList();
-                string preSql = "truncate table wechat_moment_customer;";
+                string preSql = "truncate table wechat_moment_customer";
                 arrayList.Add(preSql);
                 arrayList.Add(sql);
                 DBHelper.ExecuteTransation(arrayList);
@@ -283,19 +306,49 @@ WHERE Datediff(mm, getdate(), l.createtime) = 0";
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url = $@"https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_moment_send_result?access_token={token}";
 
-            Dictionary<MomentMember, List<WechatMomentCustomerResult>> resultdic = new Dictionary<MomentMember, List<WechatMomentCustomerResult>>();
+            //Dictionary<MomentMember, List<WechatMomentCustomerResult>> resultdic = new Dictionary<MomentMember, List<WechatMomentCustomerResult>>();
+            ConcurrentDictionary<MomentMember, List<WechatMomentCustomerResult>> resultdic = new ConcurrentDictionary<MomentMember, List<WechatMomentCustomerResult>>();
 
-            foreach (MomentMember mm in userIds)
+            List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
+
+            List<MomentMember> tempmomentMembers = new List<MomentMember>();
+            for (int i = 0; i < userIds.Count; i++)
             {
-                WechatMomentCustomerRequest request = new WechatMomentCustomerRequest();
-                request.Userid = mm.memberId;
-                request.MomentId = mm.momentId;
-                request.Limit = 5000;
+                tempmomentMembers.Add(userIds[i]);
+                if (tempmomentMembers.Count==1000||i== userIds.Count-1)
+                {
+                    var newTemp = tempmomentMembers;
+                    tasks.Add(System.Threading.Tasks.Task.Run(() =>
+                    {
+                        foreach (MomentMember mm in newTemp)
+                        {
+                            WechatMomentCustomerRequest request = new WechatMomentCustomerRequest();
+                            request.Userid = mm.memberId;
+                            request.MomentId = mm.momentId;
+                            request.Limit = 5000;
 
-                //resultdic.Add(mm.momentId+"|"+mm.memberId, getWechatMomentUsersRound(url, request, new List<WechatMomentCustomerResult>()));
-                resultdic.Add(mm, getWechatMomentResultRound(url, request, new List<WechatMomentCustomerResult>()));
-
+                            //resultdic.Add(mm.momentId+"|"+mm.memberId, getWechatMomentUsersRound(url, request, new List<WechatMomentCustomerResult>()));
+                            resultdic.TryAdd(mm, getWechatMomentResultRound(url, request, new List<WechatMomentCustomerResult>()));
+                        }
+                    }));
+                    tempmomentMembers = new List<MomentMember>();
+                }
             }
+
+            //foreach (MomentMember mm in userIds)
+            //{
+            //    WechatMomentCustomerRequest request = new WechatMomentCustomerRequest();
+            //    request.Userid = mm.memberId;
+            //    request.MomentId = mm.momentId;
+            //    request.Limit = 5000;
+
+            //    //resultdic.Add(mm.momentId+"|"+mm.memberId, getWechatMomentUsersRound(url, request, new List<WechatMomentCustomerResult>()));
+            //    resultdic.Add(mm, getWechatMomentResultRound(url, request, new List<WechatMomentCustomerResult>()));
+
+            //}
+
+            System.Threading.Tasks.Task.WaitAll(tasks.ToArray(), -1);
+
 
             string value = string.Empty;
             foreach (var item in resultdic)
@@ -317,11 +370,12 @@ WHERE Datediff(mm, getdate(), l.createtime) = 0";
 INSERT INTO wechat_moment_result(momentid,memberid,customerid,sendstatus)
 SELECT momentid,memberid,customerid,sendstatus FROM (VALUES {value})
 AS T(momentid,memberid,customerid,sendstatus)";
-
+                string updatesql =$@"insert into wechat_moment_record(lastupdatetime) values('{DateTime.Now}')";
                 ArrayList arrayList = new ArrayList();
                 string preSql = "truncate table wechat_moment_result;";
                 arrayList.Add(preSql);
                 arrayList.Add(sql);
+                arrayList.Add(updatesql);
                 DBHelper.ExecuteTransation(arrayList);
             }
 

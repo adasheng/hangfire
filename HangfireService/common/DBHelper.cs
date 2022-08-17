@@ -6,21 +6,20 @@ using System.Data;
 using System.Data.SqlClient;
 namespace HangfireService.common
 {
-    public class DBHelper
+    public static class DBHelper
     {
 
         static IConfiguration configuration;
+        public static string connString;
 
-        public DBHelper()
+        static DBHelper()
         {
             configuration = new ConfigurationBuilder()
               .Add(new JsonConfigurationSource { Path = "appsettings.json", ReloadOnChange = true })
               .Build();
-
+            connString = configuration["ConnectionString"].ToString();
 
         }
-        //临时
-        public static string connString = configuration["ConnectionString"].ToString();
         /// <summary>
         /// 执行SQL语句，返回DataTable数据
         /// </summary>
