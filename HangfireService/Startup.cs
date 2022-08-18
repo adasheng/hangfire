@@ -71,11 +71,11 @@ namespace HangfireService
 
             //监控数据库作业 任务
             JobClass jobClass = new JobClass();
-            RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
+            //RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
 
             //拉取企微朋友圈列表 服务
             WechatMomentDataJob  wechatMomentDataJob1 = new WechatMomentDataJob();
-            RecurringJob.AddOrUpdate(() => wechatMomentDataJob1.getWechatMomentList(), config["朋友圈推送列表"]);
+            //RecurringJob.AddOrUpdate(() => wechatMomentDataJob1.getWechatMomentList(), config["朋友圈推送列表"]);
 
             WechatMomentDataJob wechatMomentDataJob2 = new WechatMomentDataJob();
             //拉取企微朋友圈成员列表  服务
@@ -92,15 +92,15 @@ namespace HangfireService
 
             //拉取企微推送消息列表
             WechatMsgSendDataJob msgSendDataJob = new WechatMsgSendDataJob();
-            RecurringJob.AddOrUpdate(() => msgSendDataJob.WechatClient_SyncMsgInfo(), config["消息推送列表"]);
+            //RecurringJob.AddOrUpdate(() => msgSendDataJob.WechatClient_SyncMsgInfo(), config["消息推送列表"]);
 
             //拉取 企微推送消息任务列表
             WechatMsgSendDataJob msgSendDataJob1 = new WechatMsgSendDataJob();
-            RecurringJob.AddOrUpdate(() => msgSendDataJob1.WechatClient_SyncMsgTask(), config["消息推送成员"]);
+            //RecurringJob.AddOrUpdate(() => msgSendDataJob1.WechatClient_SyncMsgTask(), config["消息推送成员"]);
 
             //拉取 企微推送消息结果
             WechatMsgSendDataJob msgSendDataJob2 = new WechatMsgSendDataJob();
-            RecurringJob.AddOrUpdate(() => msgSendDataJob2.WechatClient_SyncMsgResult(), config["消息推送结果"]);
+            //RecurringJob.AddOrUpdate(() => msgSendDataJob2.WechatClient_SyncMsgResult(), config["消息推送结果"]);
 
         }
     }

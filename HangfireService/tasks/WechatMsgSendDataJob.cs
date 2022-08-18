@@ -137,7 +137,7 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
             List<WeChatSendTaskResult> taskResults = new List<WeChatSendTaskResult>();
             string nextCusor = string.Empty;
 
-            string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList WHERE MagType=0 AND DATEDIFF(MM,CreateDate,GETDATE())=0";
+            string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList WHERE MagType=0 ";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
             List<string> lstID = (from d in dt.AsEnumerable() select d.Field<string>("MsgId")).ToList();
             foreach (var item in lstID)
@@ -198,7 +198,8 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
             string token = HttpHelper.GetToken("p4qEGWQ50eX_-MbJiwX3DpFLzHqbPCTa7e1-LUkPPjM");
             string url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_groupmsg_send_result?access_token={0}", token);
 
-            string sql = "SELECT DISTINCT  MstId,MemberId FROM wechat_MsgTaskList";
+            string sql = @"SELECT DISTINCT  MstId,MemberId FROM wechat_MsgTaskList l INNER JOIN weChat_MsgList m ON M.MsgId=L.MstId
+WHERE Datediff(mm, getdate(), M.CreateDate) = 0";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
 
             List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
@@ -208,7 +209,7 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
             foreach (DataRow drr in dt.Rows)
             {
                 dataRows.Add(drr);
-                if (dataRows.Count == 1000 || index == dt.Rows.Count - 1)
+                if (dataRows.Count == 300 || index == dt.Rows.Count - 1)
                 {
                     List<DataRow> NewRows = dataRows;
                     dataRows = new List<DataRow>();
@@ -229,10 +230,10 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
                             }
                         }
 
-                        sql = $@" INSERT INTO [dbo].[wechat_MsgSendResult]([MsgId], [UserId], [External_userId], [SendStutas], [SendTime])
+                       string sql1 = $@" INSERT INTO [dbo].[wechat_MsgSendResult]([MsgId], [UserId], [External_userId], [SendStutas], [SendTime])
 SELECT [MsgId], [UserId], [External_userId], [SendStutas], [SendTime] FROM (VALUES {value.TrimEnd(',')} )  AS T 
 ([MsgId], [UserId], [External_userId], [SendStutas], [SendTime]) ";
-                        sqls.Add(sql);
+                        sqls.Add(sql1);
                         //DataBaseHelper.ExecuteNonQuery(sql);
                     }));
 
