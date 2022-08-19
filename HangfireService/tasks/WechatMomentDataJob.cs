@@ -7,11 +7,40 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HangfireService.tasks
 {
     public class WechatMomentDataJob
     {
+
+        /// <summary>
+        /// 朋友圈推送数据同步
+        /// </summary>
+        public  void ExecTaskList()
+        {
+            try
+            {
+                getWechatMomentList();
+
+                Thread.SpinWait(1000);
+                getWechatMomentMembers();
+
+                Thread.SpinWait(10000);
+                getWechatMomentUsers();
+
+                Thread.SpinWait(10000);
+                getWechatMomentResult();
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+        }
+
         //获取企微发送朋友圈列表数据，并插入数据库
         public void getWechatMomentList()
         {
@@ -100,7 +129,7 @@ AS t(momentid,momentitle,creator,createtime,create_type,visible_type)";
         public void getWechatMomentMembers()
         {
             //查询所有企业已发送朋友圈的id
-            string sql = "select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0";
+            string sql = "select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE())  AND  GETDATE()";
             var dt= DBHelper.ExecuteDataTable(sql,out string err);
             List<string> momentids = new List<string>();
             foreach (DataRow item in dt.Rows)
@@ -148,7 +177,9 @@ SELECT momentid,member,sendstatus FROM (VALUES {values})
 AS t(momentid,member,sendstatus)";
                
                 ArrayList arrayList = new ArrayList();
-                string preSql = "truncate table wechat_moment_user;";
+                string preSql = @"
+DELETE FROM A FROM wechat_moment_user A LEFT JOIN wechat_momentList M ON M.momentid=A.momentid
+WHERE M.createtime Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND M.create_type=0";
                 arrayList.Add(preSql);
                 arrayList.Add(sql);
                 DBHelper.ExecuteTransation(arrayList);
@@ -187,7 +218,7 @@ AS t(momentid,member,sendstatus)";
             //查询成员任务 对应的朋友圈推文id
             string sql = @$"select distinct  a.momentid,member from wechat_moment_user A 
 left join  wechat_momentList L ON A.momentid = L.momentid
-WHERE Datediff(mm, getdate(), l.createtime) = 0 
+WHERE l.createtime Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND L.create_type=0
 ";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
@@ -323,7 +354,7 @@ AS T(momentid,memberid,customerid,sendstatus)";
             //查询成员任务 对应的朋友圈推文id
             string sql = $@"select distinct a.momentid,member from wechat_moment_user A 
 left join  wechat_momentList L ON A.momentid = L.momentid
-WHERE Datediff(mm, getdate(), l.createtime) = 0";
+WHERE  l.createtime Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND L.create_type=0";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
            
@@ -422,7 +453,8 @@ WHERE Datediff(mm, getdate(), l.createtime) = 0";
              
                 string updatesql = $@"insert into wechat_moment_record(lastupdatetime) values('{DateTime.Now}')";
                ArrayList arrayList = new ArrayList();
-                string preSql = "truncate table wechat_moment_result;";
+                string preSql = $@"DELETE FROM A FROM wechat_moment_result A LEFT JOIN  wechat_momentList M ON M.momentid=A.momentid
+WHERE M.createtime Between  DATEADD(mm, -1, GETDATE())  AND GETDATE() AND M.create_type = 0";
                 arrayList.Add(preSql);
                 arrayList.AddRange(values);
                 arrayList.Add(updatesql);

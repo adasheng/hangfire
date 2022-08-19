@@ -7,12 +7,34 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using static HangfireService.model.Wechat_Msg;
 
 namespace HangfireService.tasks
 {
     public class WechatMsgSendDataJob
     {
+        /// <summary>
+        /// 群发消息数据同步
+        /// </summary>
+        public void ExecTaskList()
+        {
+            try
+            {
+                WechatClient_SyncMsgInfo();
+                Thread.SpinWait(1000);
+                WechatClient_SyncMsgTask();
+                Thread.SpinWait(10000);
+                WechatClient_SyncMsgResult();
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+           
+        }
+
         ///// <summary>
         ///// 同步消息推送详情
         ///// </summary>
@@ -137,7 +159,7 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
             List<WeChatSendTaskResult> taskResults = new List<WeChatSendTaskResult>();
             string nextCusor = string.Empty;
 
-            string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList WHERE MagType=0 ";
+            string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList WHERE MagType=0  AND CreateDate Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE()";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
             List<string> lstID = (from d in dt.AsEnumerable() select d.Field<string>("MsgId")).ToList();
             foreach (var item in lstID)
@@ -159,7 +181,9 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
                 }
             }
 
-            sql = $@"TRUNCATE TABLE wechat_MsgTaskList;
+            sql = $@"DELETE  FROM A FROM  wechat_MsgTaskList A LEFT JOIN weChat_MsgList M ON M.MsgId=A.MstId
+WHERE M.CreateDate Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND M.MagType=0;
+
 INSERT INTO wechat_MsgTaskList([MstId], [MemberId], [SendTime], [SendStatus])
 SELECT [MstId], [MemberId], [SendTime], [SendStatus] FROM (values {values.TrimEnd(',')})
 AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
@@ -199,7 +223,7 @@ AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
             string url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/externalcontact/get_groupmsg_send_result?access_token={0}", token);
 
             string sql = @"SELECT DISTINCT  MstId,MemberId FROM wechat_MsgTaskList l INNER JOIN weChat_MsgList m ON M.MsgId=L.MstId
-WHERE Datediff(mm, getdate(), M.CreateDate) = 0";
+WHERE M.CreateDate Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE()  AND  M.MagType=0";
             var dt = DBHelper.ExecuteDataTable(sql,out string err);
 
             List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
@@ -243,7 +267,8 @@ SELECT [MsgId], [UserId], [External_userId], [SendStutas], [SendTime] FROM (VALU
 
             System.Threading.Tasks.Task.WaitAll(tasks.ToArray(), -1);
 
-            string truncateSql = "truncate table wechat_MsgSendResult";
+            string truncateSql = @"DELETE FROM A FROM wechat_MsgSendResult A LEFT JOIN weChat_MsgList M ON M.MsgId=A.MsgId
+WHERE M.CreateDate Between  DATEADD(mm, -1, GETDATE())  AND GETDATE() AND M.MagType = 0";
             ArrayList arrayList = new ArrayList();
             arrayList.Add(truncateSql);
             arrayList.AddRange(sqls.ToArray());
