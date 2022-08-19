@@ -75,13 +75,13 @@ namespace HangfireService
 
             //拉取企微朋友圈列表 服务
             WechatMomentDataJob  wechatMomentDataJob= new WechatMomentDataJob();
-            RecurringJob.AddOrUpdate(() => wechatMomentDataJob.ExecTaskList(), config["朋友圈推送列表"]);
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob.ExecTaskList(), config["朋友圈推送列表"],TimeZoneInfo.Local);
 
           
 
             //拉取企微推送消息列表
             WechatMsgSendDataJob msgSendDataJob = new WechatMsgSendDataJob();
-            RecurringJob.AddOrUpdate(() => msgSendDataJob.ExecTaskList(), config["消息推送列表"]);
+            RecurringJob.AddOrUpdate(() => msgSendDataJob.ExecTaskList(), config["消息推送列表"],TimeZoneInfo.Local);
 
            
 
