@@ -69,7 +69,7 @@ namespace HangfireService.common
         }
 
         /// <summary>
-        /// 执行语句 不返回数据
+        /// 执行语句 不返回数据11
         /// </summary>
         /// <param name="sql"></param>
         public static void ExecuteNonQuery(string sql)

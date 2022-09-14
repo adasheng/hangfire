@@ -1,0 +1,9 @@
+##  **定时任务执行失败通知**
+>
+>【任务类型】：数据库作业
+>【任务名称】：<font color="info">task</font> 
+>【执行时间】：<font color="info">date</font> 
+>【失败原因】：<font color="warning">msg</font>
+>
+>
+> 请及时进行查看处理。 

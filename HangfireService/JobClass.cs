@@ -102,7 +102,7 @@ namespace HangfireService
         public string GetMsgContent()
         {
             string text = string.Empty;
-            string postPath = AppDomain.CurrentDomain.BaseDirectory + "\\msgstyle.txt";
+            string postPath = AppDomain.CurrentDomain.BaseDirectory + "msgstyle.txt";
 
             FileStream fs = null;
             if (File.Exists(postPath))
