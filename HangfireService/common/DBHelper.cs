@@ -12,13 +12,15 @@ namespace HangfireService.common
         static IConfiguration configuration;
         public static string connString;
 
+        public static string mysqlConnectStr;
+
         static DBHelper()
         {
             configuration = new ConfigurationBuilder()
               .Add(new JsonConfigurationSource { Path = "appsettings.json", ReloadOnChange = true })
               .Build();
             connString = configuration["ConnectionString"].ToString();
-
+            mysqlConnectStr = configuration["ExamConnectionString"].ToString();
         }
         /// <summary>
         /// 执行SQL语句，返回DataTable数据
@@ -136,5 +138,51 @@ namespace HangfireService.common
 
             return true;
         }
+
+
+        /// <summary>
+        ///  Mysql数据库查询
+        /// </summary>
+        public static DataTable ExecuteMySQLDataTable(string sql, out string err)
+        {
+
+            err = "";
+            try
+            {
+                DataTable dt = new DataTable();
+
+                using (MySql.Data.MySqlClient.MySqlConnection conn = new MySql.Data.MySqlClient.MySqlConnection(mysqlConnectStr))
+                {
+                    conn.Open();
+                    using (MySql.Data.MySqlClient.MySqlCommand command = new MySql.Data.MySqlClient.MySqlCommand(sql, conn))
+                    {
+                        using (MySql.Data.MySqlClient.MySqlDataAdapter adapter = new MySql.Data.MySqlClient.MySqlDataAdapter(command))
+                        {
+                            adapter.Fill(dt);
+                        }
+                    }
+                    conn.Close();
+                }
+
+                return dt;
+            }
+            catch (Exception e)
+            {
+                string functionName = "?";
+
+                try
+                {
+                    System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace();
+
+                    functionName = st.GetFrame(1).GetMethod().Name;
+                }
+                catch { }
+
+                err = "ERROR | 调用函数 : " + functionName + " | 错误信息 : " + e.Message;
+                return new DataTable();
+            }
+        }
+
+
     }
 }

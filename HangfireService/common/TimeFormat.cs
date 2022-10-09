@@ -32,10 +32,10 @@ namespace HangfireService.common
 
 
 
-        public static DateTime TimeStampToDateTime(long timeStamp, bool inMilli = false)
+        public static string TimeStampToDateTime(long timeStamp, bool inMilli = false)
         {
             DateTimeOffset dateTimeOffset = inMilli ? DateTimeOffset.FromUnixTimeMilliseconds(timeStamp) : DateTimeOffset.FromUnixTimeSeconds(timeStamp);
-            return dateTimeOffset.LocalDateTime;
+            return dateTimeOffset.UtcDateTime.ToString("s");
         }
 
 

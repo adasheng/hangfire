@@ -67,7 +67,7 @@ namespace HangfireService.tasks
                     MassSendModel massSend = new MassSendModel();
                     massSend.MsgId = item.Msgid;
                     massSend.Creator = item.Creator;
-                    massSend.CreateDate = TimeFormat.TimeStampToDateTime(Convert.ToInt64(item.CreateTime)).ToString();
+                    massSend.CreateDate = TimeFormat.TimeStampToDateTime(Convert.ToInt64(item.CreateTime));
                     massSend.MsgType = item.CreateType.ToString();
 
                     foreach (var attachment in item.Attachments)
@@ -181,7 +181,7 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
                 }
             }
 
-            sql = $@"DELETE  FROM A FROM  wechat_MsgTaskList A LEFT JOIN weChat_MsgList M ON M.MsgId=A.MstId
+            sql = $@"DELETE  FROM A FROM  wechat_MsgTaskList A INNER JOIN weChat_MsgList M ON M.MsgId=A.MstId
 WHERE M.CreateDate Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND M.MagType=0;
 
 INSERT INTO wechat_MsgTaskList([MstId], [MemberId], [SendTime], [SendStatus])
@@ -267,7 +267,7 @@ SELECT [MsgId], [UserId], [External_userId], [SendStutas], [SendTime] FROM (VALU
 
             System.Threading.Tasks.Task.WaitAll(tasks.ToArray(), -1);
 
-            string truncateSql = @"DELETE FROM A FROM wechat_MsgSendResult A LEFT JOIN weChat_MsgList M ON M.MsgId=A.MsgId
+            string truncateSql = @"DELETE FROM A FROM wechat_MsgSendResult A INNER JOIN weChat_MsgList M ON M.MsgId=A.MsgId
 WHERE M.CreateDate Between  DATEADD(mm, -1, GETDATE())  AND GETDATE() AND M.MagType = 0";
             ArrayList arrayList = new ArrayList();
             arrayList.Add(truncateSql);

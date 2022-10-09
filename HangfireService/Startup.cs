@@ -74,20 +74,25 @@ namespace HangfireService
             RecurringJob.AddOrUpdate(() => jobClass.checkfailtask(), config["CronExprees"]);
 
             ////拉取企微朋友圈列表 服务
-            //WechatMomentDataJob  wechatMomentDataJob= new WechatMomentDataJob();
-            //RecurringJob.AddOrUpdate(() => wechatMomentDataJob.ExecTaskList(), config["朋友圈推送列表"],TimeZoneInfo.Local);
+            WechatMomentDataJob wechatMomentDataJob = new WechatMomentDataJob();
+            RecurringJob.AddOrUpdate(() => wechatMomentDataJob.ExecTaskList(), config["朋友圈推送列表"], TimeZoneInfo.Local);
 
-          
+
 
             ////拉取企微推送消息列表
-            //WechatMsgSendDataJob msgSendDataJob = new WechatMsgSendDataJob();
-            //RecurringJob.AddOrUpdate(() => msgSendDataJob.ExecTaskList(), config["消息推送列表"],TimeZoneInfo.Local);
+            WechatMsgSendDataJob msgSendDataJob = new WechatMsgSendDataJob();
+            RecurringJob.AddOrUpdate(() => msgSendDataJob.ExecTaskList(), config["消息推送列表"], TimeZoneInfo.Local);
 
-           
+
             //执行数据库作业
-
             CRMDataBaseJob cRMDataBaseJob = new CRMDataBaseJob();
             RecurringJob.AddOrUpdate(() => cRMDataBaseJob.ExecJobs(), config["项目异常日志维护"], TimeZoneInfo.Local);
+
+
+
+            //同步考试系统数据
+            SyncExamDataJob syncExamDataJob = new SyncExamDataJob();
+            RecurringJob.AddOrUpdate(() => syncExamDataJob.ExecJobs(), config["同步考试系统数据"], TimeZoneInfo.Local);
 
         }
     }
