@@ -129,7 +129,7 @@ AS t(momentid,momentitle,creator,createtime,create_type,visible_type)";
         public void getWechatMomentMembers()
         {
             //查询所有企业已发送朋友圈的id
-            string sql = "select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN   DATEADD(mm, -1, GETDATE())  AND  GETDATE()";
+            string sql = "select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE())  AND  GETDATE()";
             var dt= DBHelper.ExecuteDataTable(sql,out string err);
             List<string> momentids = new List<string>();
             foreach (DataRow item in dt.Rows)
@@ -178,8 +178,9 @@ AS t(momentid,member,sendstatus)";
                
                 ArrayList arrayList = new ArrayList();
                 string preSql = @"
-DELETE FROM A FROM wechat_moment_user A INNER JOIN wechat_momentList M ON M.momentid=A.momentid
-WHERE M.createtime Between   DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND M.create_type=0";
+DELETE  FROM wechat_moment_user 
+WHERE momentid IN 
+(select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE())  AND  GETDATE())";
                 arrayList.Add(preSql);
                 arrayList.Add(sql);
                 DBHelper.ExecuteTransation(arrayList);
@@ -216,9 +217,9 @@ WHERE M.createtime Between   DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND M.cr
         {
 
             //查询成员任务 对应的朋友圈推文id
-            string sql = @$"select distinct  a.momentid,member from wechat_moment_user A 
-INNER join  wechat_momentList L ON A.momentid = L.momentid
-WHERE l.createtime Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND L.create_type=0
+            string sql = @$"select distinct  momentid,member from wechat_moment_user 
+WHERE momentid IN 
+(select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE())  AND  GETDATE())
 ";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
@@ -318,7 +319,8 @@ AS T(momentid,memberid,customerid,sendstatus)";
             if (values.Count>0)
             {
                 ArrayList arrayList = new ArrayList();
-                string preSql = "truncate table wechat_moment_customer";
+                string preSql = $@"DELETE FROM  wechat_moment_customer 
+WHERE momentid IN (select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE())  AND  GETDATE())";
                 arrayList.Add(preSql);
                 arrayList.AddRange(values);
                 arrayList.Add(sql);
@@ -352,9 +354,9 @@ AS T(momentid,memberid,customerid,sendstatus)";
         {
 
             //查询成员任务 对应的朋友圈推文id
-            string sql = $@"select distinct a.momentid,member from wechat_moment_user A 
-INNER join  wechat_momentList L ON A.momentid = L.momentid
-WHERE  l.createtime Between   DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND L.create_type=0";
+            string sql = $@"select distinct  momentid,member from wechat_moment_user 
+WHERE momentid IN 
+(select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE()) AND  GETDATE())";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
            
@@ -453,8 +455,10 @@ WHERE  l.createtime Between   DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND L.c
              
                 string updatesql = $@"insert into wechat_moment_record(lastupdatetime) values('{DateTime.Now.ToString("s")}')";
                ArrayList arrayList = new ArrayList();
-                string preSql = $@"DELETE FROM A FROM wechat_moment_result A INNER JOIN  wechat_momentList M ON M.momentid=A.momentid
-WHERE M.createtime Between  DATEADD(mm, -1, GETDATE())  AND GETDATE() AND M.create_type = 0";
+                string preSql = $@"DELETE FROM wechat_moment_result 
+WHERE momentid IN 
+(select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(mm, -1, GETDATE())  AND  GETDATE())
+";
                 arrayList.Add(preSql);
                 arrayList.AddRange(values);
                 arrayList.Add(updatesql);
