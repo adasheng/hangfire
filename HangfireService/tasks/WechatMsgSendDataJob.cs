@@ -160,7 +160,7 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
             string nextCusor = string.Empty;
 
             string sql = "SELECT DISTINCT MsgId FROM  wechat_MsgList WHERE MagType=0  AND CreateDate Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE()";
-            var dt = DBHelper.ExecuteDataTable(sql,out string err);
+            var dt = DBHelper.ExecuteDataTable(sql, out string err);
             List<string> lstID = (from d in dt.AsEnumerable() select d.Field<string>("MsgId")).ToList();
             foreach (var item in lstID)
             {
@@ -177,19 +177,23 @@ AS t( [MsgId], [MsgName], [CreateDate], [Creator], [MagType], [MsgSource], [MsgD
                     {
                         values += $@"('{taskResult.MsgId}','{item.Userid}','{TimeFormat.TimeStampToDateTime(Convert.ToInt64(item.SendTime))}','{item.Status}'),";
                     }
-                    
+
                 }
             }
 
-            sql = $@"DELETE  FROM A FROM  wechat_MsgTaskList A INNER JOIN weChat_MsgList M ON M.MsgId=A.MstId
+            values = values.TrimEnd(',');
+
+            if (!string.IsNullOrEmpty(values))
+            {
+                sql = $@"DELETE  FROM A FROM  wechat_MsgTaskList A INNER JOIN weChat_MsgList M ON M.MsgId=A.MstId
 WHERE M.CreateDate Between  DATEADD(mm, -1, GETDATE())  AND  GETDATE() AND M.MagType=0;
 
 INSERT INTO wechat_MsgTaskList([MstId], [MemberId], [SendTime], [SendStatus])
-SELECT [MstId], [MemberId], [SendTime], [SendStatus] FROM (values {values.TrimEnd(',')})
+SELECT [MstId], [MemberId], [SendTime], [SendStatus] FROM (values {values})
 AS t( [MstId], [MemberId], [SendTime], [SendStatus])";
+                DBHelper.ExecuteNonQuery(sql);
+            }
 
-            DBHelper.ExecuteNonQuery(sql);
-          
         }
 
         public void GetMsgTask(List<WeChatSendTaskResult> taskResults, string url, string nextCusor, string MsgId)
