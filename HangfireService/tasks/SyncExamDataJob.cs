@@ -3,6 +3,8 @@ using MySql.Data.MySqlClient;
 using System.Collections;
 using System.Data;
 using System;
+using HangfireService.model;
+using static HangfireService.model.ExamModel;
 
 namespace HangfireService.tasks
 {
@@ -20,7 +22,7 @@ namespace HangfireService.tasks
             System.Threading.Tasks.Task.Run(() =>
             {
                 //更新考试项目数据
-                string sql = $@" SELECT A.id,A.`name`,A.create_at,A.create_by,C.auth_account FROM  t_project  A 
+                string sql = $@" SELECT A.id,A.`name`,A.create_at,A.create_by,C.auth_account,A.setting FROM  t_project  A 
 LEFT JOIN t_account C ON C.user_id=A.create_by
 WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()";
 
@@ -28,11 +30,23 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
 
 
                 string value = string.Empty;
+                string begendate = string.Empty;
+                string enddate = string.Empty;
+
                 if (dt.Rows.Count > 0)
                 {
                     foreach (DataRow item in dt.Rows)
                     {
-                        value += $@" SELECT '{item["id"]}' AS id,'{item["name"]}' AS name,'{item["create_at"]}' AS create_at,'{item["auth_account"]}' AS auth_account  UNION ALL";
+                       
+                        ExamSettingModel settingModel= Newtonsoft.Json.JsonConvert.DeserializeObject<ExamSettingModel>(item["setting"].ToString());
+                        if (settingModel.examSetting!=null)
+                        {
+                            begendate = TimeFormat.TimeStampToDateTime(settingModel.examSetting.startTime);
+                            enddate = TimeFormat.TimeStampToDateTime(settingModel.examSetting.endTime);
+                        }
+                       
+
+                        value += $@" SELECT '{item["id"]}' AS id,'{item["name"]}' AS name,'{item["create_at"]}' AS create_at,'{item["auth_account"]}' AS auth_account, '{begendate}' AS starttime, '{enddate}' AS endtime  UNION ALL";
                     }
                     string dtName = Tool.GenStr(6, false);
                     value = value.Remove(value.Length - 10);//删除末尾union all
@@ -45,12 +59,15 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
                                        A.create_at=B.create_at,
                                        A.auth_account=B.auth_account
                                        
-                                       when not matched then insert 
+                                       when not matched then insert (id,name,create_at,auth_account,starttime,endtime)
                                        values(
                                        B.id,
                                        B.name,
                                        B.create_at,
-                                       B.auth_account);";
+                                       B.auth_account,
+                                       B.starttime,
+                                       B.endtime
+                                               );";
 
                     ArrayList arrayList = new ArrayList();
                     arrayList.Add(insertSql);
