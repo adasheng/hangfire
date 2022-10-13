@@ -41,8 +41,8 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
                         ExamSettingModel settingModel= Newtonsoft.Json.JsonConvert.DeserializeObject<ExamSettingModel>(item["setting"].ToString());
                         if (settingModel.examSetting!=null)
                         {
-                            begendate = TimeFormat.TimeStampToDateTime(settingModel.examSetting.startTime);
-                            enddate = TimeFormat.TimeStampToDateTime(settingModel.examSetting.endTime);
+                            begendate = TimeFormat.TimeStampToDateTime(settingModel.examSetting.startTime,true);
+                            enddate = TimeFormat.TimeStampToDateTime(settingModel.examSetting.endTime,true);
                         }
                        
 
