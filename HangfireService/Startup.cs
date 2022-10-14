@@ -98,7 +98,7 @@ namespace HangfireService
 
             //同步人员
             SyncExamUserJob syncExamUserJob = new SyncExamUserJob();
-            RecurringJob.AddOrUpdate(() => syncExamUserJob.ExecJobs(), config["同步考试系统数据"], TimeZoneInfo.Local);
+            RecurringJob.AddOrUpdate(() => syncExamUserJob.ExecJobs(), config["同步考试系统人员"], TimeZoneInfo.Local);
 
 
 
