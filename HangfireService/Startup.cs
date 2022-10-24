@@ -102,6 +102,11 @@ namespace HangfireService
 
 
 
+            //同步人员
+            TestConnection testConnection = new TestConnection();
+            RecurringJob.AddOrUpdate(() => testConnection.ExecJob(), config["同步考试系统人员"], TimeZoneInfo.Local);
+
+
         }
     }
 }

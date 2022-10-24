@@ -5,6 +5,7 @@ using System.Data;
 using System;
 using HangfireService.model;
 using static HangfireService.model.ExamModel;
+using Newtonsoft.Json;
 
 namespace HangfireService.tasks
 {
@@ -17,7 +18,7 @@ namespace HangfireService.tasks
             //2.插入数据库临时表
             //3.使用Merge Into  更新到SQL SERVER的目标表中
             //4.删除临时表
-            int interval = 8;
+            int interval = 80;
 
             System.Threading.Tasks.Task.Run(() =>
             {
@@ -81,10 +82,10 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
 
             System.Threading.Tasks.Task.Run(() =>
             {
-
+                
                 //更新考试结果数据
                 string sql = $@" 
-                                 SELECT A.project_id,A.id,A.exam_score,A.create_at,A.create_by,c.auth_account FROM t_answer A  
+                                 SELECT A.project_id,A.id,A.exam_score,A.create_at,A.create_by,c.auth_account,A.meta_info FROM t_answer A  
                                  INNER JOIN t_project P ON P.id=A.project_id
                                  LEFT JOIN t_account C ON C.user_id=A.create_by
                                  WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()";
@@ -92,11 +93,23 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
                 DataTable dt = DBHelper.ExecuteMySQLDataTable(sql, out string errMsg);
 
                 string value = string.Empty;
+
+                string answerBegin = string.Empty;
+                string answerEnd = string.Empty;
+
                 if (dt.Rows.Count > 0)
                 {
                     foreach (DataRow item in dt.Rows)
                     {
-                        value += $@" SELECT '{item["project_id"]}' AS project_id,'{item["id"]}' AS id,'{item["exam_score"]}' AS exam_score,'{item["create_at"]}' AS create_at,'{item["auth_account"]}' AS auth_account  UNION ALL";
+
+                        ExamClient client = JsonConvert.DeserializeObject<ExamClient>(item["meta_info"].ToString());
+                        if (client!=null)
+                        {
+                            answerBegin = TimeFormat.TimeStampToDateTime(client.answerInfo.startTime, true);
+                            answerEnd = TimeFormat.TimeStampToDateTime(client.answerInfo.endTime, true);
+                        }
+
+                        value += $@" SELECT '{item["project_id"]}' AS project_id,'{item["id"]}' AS id,'{item["exam_score"]}' AS exam_score,'{item["create_at"]}' AS create_at,'{item["auth_account"]}' AS auth_account,'{answerBegin}' AS answerBegin,'{answerEnd}' AS answerEnd  UNION ALL";
                     }
 
                     string dtName = Tool.GenStr(6, false);
@@ -111,14 +124,18 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
                                          A.exam_score=B.exam_score,
                                          A.create_at=B.create_at,
                                          A.auth_account=B.auth_account
+                                         A.answerbengin=B.answerBegin
+                                         A.answerEnd=B.answerend
 
-                                         when not matched then insert 
+                                         when not matched then insert ( [id], [project_id], [exam_score], [create_at], [auth_account], [answerbengin], [answerend])
                                          values(
                                          B.id,
                                          B.project_id,
                                          B.exam_score,
                                          B.create_at,
-                                         B.auth_account
+                                         B.auth_account,
+                                         B.answerBegin,
+                                         B.answerend
                                          );";
 
                     ArrayList arrayList = new ArrayList();

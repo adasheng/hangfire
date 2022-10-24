@@ -5,6 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClickHouse.Ado" Version="1.5.3" />
+    <PackageReference Include="ClickHouse.Client" Version="6.0.0" />
+    <PackageReference Include="ClickHouse.Net" Version="0.5.1" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.7.30" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.7.30" />
     <PackageReference Include="MySql.Data" Version="8.0.30" />

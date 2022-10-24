@@ -182,5 +182,64 @@ namespace HangfireService.model
         }
 
 
+
+        public class ClientInfo
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public string agent { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string browser { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string platformVersion { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string browserVersion { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string platform { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string remoteIp { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public string deviceType { get; set; }
+        }
+
+        public class AnswerInfo
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public long startTime { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public long endTime { get; set; }
+        }
+
+        public class ExamClient
+        {
+            /// <summary>
+            /// 
+            /// </summary>
+            public ClientInfo clientInfo { get; set; }
+            /// <summary>
+            /// 
+            /// </summary>
+            public AnswerInfo answerInfo { get; set; }
+        }
+
+
+
     }
 }
