@@ -355,7 +355,7 @@ WHERE momentid IN (select  distinct momentid from [dbo].[wechat_momentList] wher
 
             //查询成员任务 对应的朋友圈推文id
             string sql = $@"select distinct  momentid,member from wechat_moment_user 
-WHERE momentid IN ('mom0y3RTCwAA-OJUmlTIDslCOKm8Ai4WrQ')
+WHERE momentid IN 
  (select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(DD, -15, GETDATE()) AND  GETDATE())";
             var dt = DBHelper.ExecuteDataTable(sql, out string err);
 
@@ -456,7 +456,7 @@ WHERE momentid IN ('mom0y3RTCwAA-OJUmlTIDslCOKm8Ai4WrQ')
                 string updatesql = $@"insert into wechat_moment_record(lastupdatetime) values('{DateTime.Now.ToString("s")}')";
                ArrayList arrayList = new ArrayList();
                 string preSql = $@"DELETE FROM wechat_moment_result 
-WHERE momentid IN ('mom0y3RTCwAA-OJUmlTIDslCOKm8Ai4WrQ')
+WHERE momentid IN 
  (select  distinct momentid from [dbo].[wechat_momentList] where  create_type=0 AND createtime BETWEEN  DATEADD(DD, -15, GETDATE())  AND  GETDATE())
 ";
                 arrayList.Add(preSql);
