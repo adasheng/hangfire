@@ -18,14 +18,14 @@ namespace HangfireService.tasks
             //2.插入数据库临时表
             //3.使用Merge Into  更新到SQL SERVER的目标表中
             //4.删除临时表
-            int interval = 80;
+            int interval = 15;
 
             System.Threading.Tasks.Task.Run(() =>
             {
                 //更新考试项目数据
                 string sql = $@" SELECT A.id,A.`name`,A.create_at,A.create_by,C.auth_account,A.setting FROM  t_project  A 
 LEFT JOIN t_account C ON C.user_id=A.create_by
-WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()";
+WHERE A.create_at BETWEEN date_add(now(), interval - {interval} DAY) AND NOW()";
 
                 DataTable dt = DBHelper.ExecuteMySQLDataTable(sql, out string errMsg);
 
@@ -88,7 +88,7 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()"
                                  SELECT A.project_id,A.id,A.exam_score,A.create_at,A.create_by,c.auth_account,A.meta_info FROM t_answer A  
                                  INNER JOIN t_project P ON P.id=A.project_id
                                  LEFT JOIN t_account C ON C.user_id=A.create_by
-                                 WHERE A.create_at BETWEEN date_add(now(), interval - {interval} HOUR) AND NOW()";
+                                 WHERE A.create_at BETWEEN date_add(now(), interval - {interval} DAY) AND NOW()";
 
                 DataTable dt = DBHelper.ExecuteMySQLDataTable(sql, out string errMsg);
 
