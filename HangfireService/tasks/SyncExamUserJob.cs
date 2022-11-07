@@ -52,21 +52,21 @@ namespace HangfireService.tasks
 
 
 
-            Dictionary<string, string> tocreateUsers = GetToCreateUsers();
+            List<UserInfo> tocreateUsers = GetToCreateUsers();
             foreach (var item in tocreateUsers)
             {
                 request = new RestRequest("", Method.Post);
                 User user = new User();
-                user.password = "123456";
-                user.rePassword = "123456";
+                user.password = item.no + (string.IsNullOrEmpty(item.cardNo) ? "123456" : item.cardNo.Substring(item.cardNo.Length - 6, 6));
+                user.rePassword = user.password;
                 user.status = 1;
                 user.roles = new System.Collections.Generic.List<string> { "1572889527415713794" };
-                user.name = item.Value;
-                user.username = item.Key;
+                user.name = item.name;
+                user.username = item.no;
                 //循环同步
                 ExecCreate(client, user, request, cookie);
             }
-           
+
         }
 
         private void ExecCreate(RestClient client, User user, RestRequest request, string cookie)
@@ -77,25 +77,32 @@ namespace HangfireService.tasks
         }
 
 
-        private Dictionary<string, string> GetToCreateUsers()
+        private List<UserInfo> GetToCreateUsers()
         {
             var dt = DBHelper.ExecuteMySQLDataTable(@"select  auth_account from  t_account  where `status`=1 and is_deleted=0 ", out string err);
             List<string> currentUsers = dt.AsEnumerable().Select(x => x.Field<string>("auth_account")).ToList();
 
-            dt = DBHelper.ExecuteDataTable(@"SELECT  工号,名称 FROM  FLOW_USERS WHERE  工号 IS NOT NULL AND  是否删除=0", out err);
+            dt = DBHelper.ExecuteDataTable(@"	   SELECT  工号,名称,HR.id_card AS 身份证号 FROM  FLOW_USERS u
+		   LEFT JOIN tb_hr_employee HR ON HR.emp_id=u.工号
+		   WHERE  工号 IS NOT NULL AND  u.是否删除=0", out err);
 
-          
-            Dictionary<string, string> toCreateUsers = new Dictionary<string, string>();
-            foreach (DataRow dr  in dt.Rows)
+            List<UserInfo> users = new List<UserInfo>();
+
+            foreach (DataRow dr in dt.Rows)
             {
                 if (!currentUsers.Contains(dr["工号"].ToString()))
                 {
-                    toCreateUsers.Add(dr["工号"].ToString(), dr["名称"].ToString());
+                    UserInfo user = new UserInfo();
+                    user.name = dr["名称"].ToString();
+                    user.no = dr["工号"].ToString();
+                    user.cardNo = dr["身份证号"].ToString();
+                    users.Add(user);
+
                 }
             }
 
-            return toCreateUsers;
-           
+            return users;
+
         }
     }
 
@@ -138,4 +145,12 @@ namespace HangfireService.tasks
         public List<string> roles { get; set; }
     }
 
+    class UserInfo
+    {
+        public string name { get; set; }
+
+        public string no { get; set; }
+
+        public string cardNo { get; set; }
+    }
 }

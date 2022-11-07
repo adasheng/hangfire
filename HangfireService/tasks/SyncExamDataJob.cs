@@ -114,17 +114,17 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} DAY) AND NOW()";
 
                     string dtName = Tool.GenStr(6, false);
                     value = value.Remove(value.Length - 10);//删除末尾union all
-                    string insertSql = $@" SELECT  * INTO #{dtName} FROM ({value})T";
-                    DBHelper.ExecuteNonQuery(insertSql);
+                    string insertSql = $@" SELECT  * INTO {dtName} FROM ({value})T";
+                    //DBHelper.ExecuteNonQuery(insertSql);
 
 
-                    string mergSql = $@"merge into exam_result A using #{dtName} B on A.id=B.id
+                    string mergSql = $@"merge into exam_result A using {dtName}  B on A.id=B.id
                                          when matched then update set
                                          A.project_id=B.project_id,
                                          A.exam_score=B.exam_score,
                                          A.create_at=B.create_at,
-                                         A.auth_account=B.auth_account
-                                         A.answerbengin=B.answerBegin
+                                         A.auth_account=B.auth_account,
+                                         A.answerbengin=B.answerBegin,
                                          A.answerEnd=B.answerend
 
                                          when not matched then insert ( [id], [project_id], [exam_score], [create_at], [auth_account], [answerbengin], [answerend])
@@ -141,7 +141,7 @@ WHERE A.create_at BETWEEN date_add(now(), interval - {interval} DAY) AND NOW()";
                     ArrayList arrayList = new ArrayList();
                     arrayList.Add(insertSql);
                     arrayList.Add(mergSql);
-                    arrayList.Add($@"drop table #{dtName}");
+                    arrayList.Add($@"drop table {dtName}");
 
                     DBHelper.ExecuteTransation(arrayList);
                 }
